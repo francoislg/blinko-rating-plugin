@@ -1,5 +1,46 @@
 {
-  "title": "我的插件",
-  "countLabel": "计数为 {{count}}",
-  "successMessage": "成功！"
-} 
+  "settings": {
+    "title": "星级评分设置",
+    "enabled": "已启用",
+    "disabled": "已禁用",
+    "filterMode": "筛选模式",
+    "whitelist": "白名单",
+    "blacklist": "黑名单",
+    "whitelistDesc": "<strong>白名单：</strong>仅允许这些标签显示星级评分。",
+    "blacklistDesc": "<strong>黑名单：</strong>允许所有标签显示星级评分，除了这些标签。",
+    "allowedTags": "允许的标签",
+    "excludedTags": "排除的标签",
+    "refreshTags": "刷新标签",
+    "loading": "加载中...",
+    "selectTagsWhitelist": "选择应显示星级评分的标签。",
+    "selectTagsBlacklist": "选择不应显示星级评分的标签。",
+    "filterTagsPlaceholder": "筛选标签...",
+    "noTagsFound": "未找到标签。在 Blinko 中创建标签后，它们将显示在这里。",
+    "allowed": "已允许",
+    "excluded": "已排除",
+    "saveSettings": "保存设置",
+    "cancel": "取消",
+    "settingsSaved": "设置已保存！",
+    "failedToSave": "保存设置失败",
+    "failedToFetchTags": "获取标签失败：",
+    "failedToParseConfig": "解析星级配置失败："
+  },
+  "rating": {
+    "ratedStars": "已评分 {{count}} 星！",
+    "ratedStars_plural": "已评分 {{count}} 星！",
+    "ratingCleared": "评分已清除",
+    "failedToSave": "保存评分失败",
+    "failedToClear": "清除评分失败",
+    "average": "平均分：",
+    "vote": "票",
+    "vote_plural": "票",
+    "you": "你",
+    "notRated": "未评分",
+    "voteButton": "投票 ▼",
+    "collapse": "收起 ▲",
+    "otherVotes": "其他投票：",
+    "user": "用户 {{id}}",
+    "notRatedShort": "（未评分）",
+    "clear": "清除"
+  }
+}

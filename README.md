@@ -1,74 +1,65 @@
-# Blinko Plugin Template
+# Blinko Rating Plugin
 
-A template for building Blinko plugins quickly and efficiently.
+A Blinko plugin that enables users to rate their notes using a 1-5 star rating system. Supports both personal ratings and collaborative multi-user ratings with aggregate displays.
 
-[Blinko Plugin Development Documentation](https://blinko.mintlify.app/plugins/get-started)
+## Features
 
-## 🚀 Quick Start
+- ⭐ 1-5 star rating system for notes
+- 👥 Multi-user collaborative ratings with averages
+- 🏷️ Tag-based filtering (whitelist/blacklist modes)
+- 🌍 Internationalization support (English, Chinese, French)
+- 🎨 Expandable/collapsible multi-user view
+- ⚡ Real-time config updates without page reload
+- 📊 Vote count and average rating display
 
-1. Clone this repository
-```bash
-git clone https://github.com/blinko-space/blinko-plugin-template.git
-cd blinko-plugin-template
-```
+## Quick Start
 
-2. Install dependencies
+1. Install dependencies:
 ```bash
 bun install
 ```
 
-3. Start development server
+2. Start development server:
 ```bash
 bun run dev
 ```
 
-4. Visit `http://localhost:3000` for connection instructions
+3. Connect to Blinko:
+   - Open Blinko Settings → Plugin Setting → Local Development
+   - Add WebSocket URL: `ws://localhost:8080`
 
-## 📖 Official Documentation
+4. Configure in Blinko:
+   - Enable the plugin in Blinko settings
+   - Open plugin settings to configure tag filtering
 
-> ⭐ **Important: Please visit [Blinko Plugin Development Documentation](https://blinko.mintlify.app/plugins/get-started) for complete development guides and best practices!**
+## Configuration
 
-## 🛠️ Development Commands
+The plugin supports flexible tag-based filtering:
 
-- `bun run dev` - Start development server
-- `bun run release:publish` - Build and publish plugin
+- **Whitelist Mode**: Only show ratings on notes with selected tags
+- **Blacklist Mode**: Show ratings on all notes except those with selected tags
+- **Enable/Disable**: Toggle the entire rating system on/off
 
-## 📁 Directory Structure
+## Data Storage
 
-```
-├── src/              # Source code directory
-├── dist/            # Development build output
-├── release/         # Production build output
-├── plugin.json      # Plugin configuration
-└── vite.config.ts   # Vite configuration
-```
-
-## 🔧 Configuration
-
-Configure your plugin in `plugin.json`:
-
-```json
-{
-  "name": "blinko-plugin-demo",
-  "author": "blinko-offical",
-  "url": "https://github.com/blinko-space/blinko-plugin-template",
-  "version": "0.0.4",
-  "minAppVersion": "0.0.0",
-  "displayName": {
-    "default": "Blinko plugin demo",
-    "zh": "Blinko插件示例"
-  },
-  "description": {
-    "default": "This is a blinko plugin demo, you can use it as a template to create your own plugin.",
-    "zh": "这是一个blinko插件示例，你可以使用它作为模板来创建自己的插件。"
-  },
-  "readme": {
-    "default": "README.md",
-    "zh": "README_zh.md"
-  }
+Ratings are stored in note metadata:
+```typescript
+note.metadata.starRatings = {
+  "userId1": 5,
+  "userId2": 3,
+  "userId3": 4
 }
 ```
 
-## 📝 License
+## Development
+
+- **Entry Point**: `src/index.tsx`
+- **Main Component**: `src/RatingContainer.tsx`
+- **Settings Panel**: `src/RatingSettings.tsx`
+- **Data Layer**: `src/rating-data.ts`, `src/rating-config.ts`
+
+See `CLAUDE.md` for detailed architecture and development guidelines.
+
+## License
 
 MIT

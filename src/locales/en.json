@@ -1,5 +1,46 @@
 {
-  "title": "My Plugin",
-  "countLabel": "Count is {{count}}",
-  "successMessage": "Success!"
-} 
+  "settings": {
+    "title": "Stars Settings",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "filterMode": "Filter Mode",
+    "whitelist": "Whitelist",
+    "blacklist": "Blacklist",
+    "whitelistDesc": "<strong>Whitelist:</strong> Only allow these tags to have Stars.",
+    "blacklistDesc": "<strong>Blacklist:</strong> Allow all tags to have Stars, except those tags.",
+    "allowedTags": "Allowed Tags",
+    "excludedTags": "Excluded Tags",
+    "refreshTags": "Refresh Tags",
+    "loading": "Loading...",
+    "selectTagsWhitelist": "Select tags that should show star ratings.",
+    "selectTagsBlacklist": "Select tags that should NOT show star ratings.",
+    "filterTagsPlaceholder": "Filter tags...",
+    "noTagsFound": "No tags found. Tags will appear here once you create some in Blinko.",
+    "allowed": "Allowed",
+    "excluded": "Excluded",
+    "saveSettings": "Save Settings",
+    "cancel": "Cancel",
+    "settingsSaved": "Settings saved!",
+    "failedToSave": "Failed to save settings",
+    "failedToFetchTags": "Failed to fetch tags:",
+    "failedToParseConfig": "Failed to parse stars config:"
+  },
+  "rating": {
+    "ratedStars": "Rated {{count}} star!",
+    "ratedStars_plural": "Rated {{count}} stars!",
+    "ratingCleared": "Rating cleared",
+    "failedToSave": "Failed to save rating",
+    "failedToClear": "Failed to clear rating",
+    "average": "Average:",
+    "vote": "vote",
+    "vote_plural": "votes",
+    "you": "You",
+    "notRated": "Not rated",
+    "voteButton": "Vote ▼",
+    "collapse": "Collapse ▲",
+    "otherVotes": "Other votes:",
+    "user": "User {{id}}",
+    "notRatedShort": "(not rated)",
+    "clear": "Clear"
+  }
+}

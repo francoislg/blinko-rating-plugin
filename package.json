@@ -14,8 +14,8 @@
   },
   "description": "a blinko plugin",
   "scripts": {
-    "dev": "blinko-cli dev server",
-    "ngrok": "ngrok http 8080",
+    "dev": "blinko-cli dev server --ws-port=8082 --http-port=3002",
+    "ngrok": "ngrok http 8081",
     "release:publish": "vite build --mode production && blinko-cli release plugin"
   },
   "dependencies": {

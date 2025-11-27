@@ -11,7 +11,7 @@ export function App(): JSXInternal.Element {
       <div class="card">
         <button onClick={() => {
           setCount(count => count + 1);
-          console.log(window.Blinko.toast.success(i18n.t('successMessage')));
+          window.Blinko.toast.success(i18n.t('successMessage'));
         }}>
           {i18n.t('countLabel', { count })}
         </button>

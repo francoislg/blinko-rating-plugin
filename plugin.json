@@ -1,16 +1,16 @@
 {
-  "name": "blinko-plugin-demo",
-  "author": "blinko-offical",
-  "url": "https://github.com/blinko-space/blinko-plugin-template",
-  "version": "0.0.4",
+  "name": "blinko-rating-plugin",
+  "author": "blinko-community",
+  "url": "https://github.com/yourusername/blinko-rating-plugin",
+  "version": "0.1.0",
   "minAppVersion": "0.0.0",
   "displayName": {
-    "default": "Blinko plugin demo",
-    "zh": "Blinko插件示例"
+    "default": "Rating Plugin",
+    "zh": "评分插件"
   },
   "description": {
-    "default": "This is a blinko plugin demo, you can use it as a template to create your own plugin.",
-    "zh": "这是一个blinko插件示例，你可以使用它作为模板来创建自己的插件。"
+    "default": "Rate your notes and blinks with a 1-5 star rating system. Supports both personal and collaborative team ratings.",
+    "zh": "使用1-5星评分系统为您的笔记和想法评分。支持个人评分和团队协作评分。"
   },
   "readme": {
     "default": "README.md",
