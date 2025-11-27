@@ -6,7 +6,7 @@ export interface Note {
     tag: Tag;
   }>;
   metadata?: {
-    starRatings?: Record<string, number>;
+    ratings?: Record<string, Record<string, number>>; // guid -> { userId -> rating }
   };
   _id: string;
   id: string;
@@ -22,14 +22,22 @@ export interface Tag {
   parent: number;
 }
 
-export type RatingType = "stars";
+export type RatingDisplayType = "stars" | "upvotes";
 
 export type TagFilterMode = "whitelist" | "blacklist";
 
-export interface RatingTypeConfig {
+export interface RatingConfig {
+  guid: string;
+  name: string;
+  type: RatingDisplayType;
   enabled: boolean;
   mode: TagFilterMode;
   tags: string[];
+  label?: string;
+}
+
+export interface PluginConfig {
+  ratings: RatingConfig[];
 }
 
 export interface NoteRatingData {
