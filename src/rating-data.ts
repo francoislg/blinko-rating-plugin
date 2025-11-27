@@ -1,30 +1,27 @@
 import { RatingPluginConfiguration } from "./rating-config";
-import type { Note, NoteRatingData, RatingType } from "./types";
+import type { Note, NoteRatingData, RatingConfig } from "./types";
 
 export class RatingPluginData {
   constructor(private config: RatingPluginConfiguration) {}
 
   private getRatingsFromMetadata(
     note: Note,
-    ratingType: RatingType
+    guid: string
   ): Record<string, number> {
-    if (ratingType === "stars") {
-      if (!note?.metadata?.starRatings) {
-        return {};
-      }
-      return note.metadata.starRatings;
+    if (!note?.metadata?.ratings) {
+      return {};
     }
-    return {};
+    return note.metadata.ratings[guid] || {};
   }
 
-  getRating(note: Note, ratingType: RatingType): number {
+  getRating(note: Note, guid: string): number {
     const userId = this.config.getUserId();
-    const ratings = this.getRatingsFromMetadata(note, ratingType);
+    const ratings = this.getRatingsFromMetadata(note, guid);
     return ratings[userId] || 0;
   }
 
-  getAverageRating(note: Note, ratingType: RatingType): number {
-    const ratings = this.getRatingsFromMetadata(note, ratingType);
+  getAverageRating(note: Note, guid: string): number {
+    const ratings = this.getRatingsFromMetadata(note, guid);
     const values = Object.values(ratings);
 
     if (values.length === 0) {
@@ -35,33 +32,33 @@ export class RatingPluginData {
     return sum / values.length;
   }
 
-  getVoteCount(note: Note, ratingType: RatingType): number {
-    const ratings = this.getRatingsFromMetadata(note, ratingType);
+  getVoteCount(note: Note, guid: string): number {
+    const ratings = this.getRatingsFromMetadata(note, guid);
     return Object.keys(ratings).length;
   }
 
-  getAllRatings(note: Note, ratingType: RatingType): Record<string, number> {
-    return this.getRatingsFromMetadata(note, ratingType);
+  getAllRatings(note: Note, guid: string): Record<string, number> {
+    return this.getRatingsFromMetadata(note, guid);
   }
 
-  getRatingForNote(note: Note, ratingType: RatingType): NoteRatingData {
+  getRatingForNote(note: Note, guid: string): NoteRatingData {
     return {
-      userRating: this.getRating(note, ratingType),
-      averageRating: this.getAverageRating(note, ratingType),
-      voteCount: this.getVoteCount(note, ratingType),
-      allRatings: this.getAllRatings(note, ratingType),
+      userRating: this.getRating(note, guid),
+      averageRating: this.getAverageRating(note, guid),
+      voteCount: this.getVoteCount(note, guid),
+      allRatings: this.getAllRatings(note, guid),
     };
   }
 
   async saveRating(
     note: Note,
-    ratingType: RatingType,
+    guid: string,
     rating: number
   ): Promise<void> {
     const userId = this.config.getUserId();
     const noteId = note.id?.toString() || note._id?.toString();
 
-    const currentRatings = this.getRatingsFromMetadata(note, ratingType);
+    const currentRatings = this.getRatingsFromMetadata(note, guid);
     const updatedRatings = { ...currentRatings };
 
     if (rating === 0) {
@@ -70,10 +67,14 @@ export class RatingPluginData {
       updatedRatings[userId] = rating;
     }
 
-    const metadataKey = ratingType === "stars" ? "starRatings" : "ratings";
+    const allRatings = {
+      ...(note.metadata?.ratings || {}),
+      [guid]: updatedRatings,
+    };
+
     const updatedMetadata = {
       ...(note.metadata || {}),
-      [metadataKey]: updatedRatings,
+      ratings: allRatings,
     };
 
     try {
@@ -82,20 +83,17 @@ export class RatingPluginData {
         metadata: updatedMetadata,
       });
     } catch (error) {
-      console.error("Failed to save rating:", error);
       throw error;
     }
   }
 
-  private shouldShowRatingType(note: Note, ratingType: RatingType): boolean {
-    const config = this.config.getConfig(ratingType);
-
-    if (!config.enabled) {
+  private shouldShowRating(note: Note, ratingConfig: RatingConfig): boolean {
+    if (!ratingConfig.enabled) {
       return false;
     }
 
     if (!note.tags || note.tags.length === 0) {
-      return config.mode === "blacklist" || config.tags.length === 0;
+      return ratingConfig.mode === "blacklist" || ratingConfig.tags.length === 0;
     }
 
     const noteTags = Array.isArray(note.tags)
@@ -104,23 +102,23 @@ export class RatingPluginData {
         )
       : [];
 
-    if (config.mode === "whitelist") {
-      if (config.tags.length === 0) {
+    if (ratingConfig.mode === "whitelist") {
+      if (ratingConfig.tags.length === 0) {
         return true;
       }
-      return noteTags.some((tag: string) => config.tags.includes(tag));
+      return noteTags.some((tag: string) => ratingConfig.tags.includes(tag));
     } else {
-      if (config.tags.length === 0) {
+      if (ratingConfig.tags.length === 0) {
         return true;
       }
-      return !noteTags.some((tag: string) => config.tags.includes(tag));
+      return !noteTags.some((tag: string) => ratingConfig.tags.includes(tag));
     }
   }
 
-  getRatingsToDisplay(note: Note): RatingType[] {
-    const allRatingTypes: RatingType[] = ["stars"];
-    return allRatingTypes.filter((ratingType) =>
-      this.shouldShowRatingType(note, ratingType)
-    );
+  getRatingsToDisplay(note: Note): string[] {
+    const allConfigs = this.config.getAllConfigs();
+    return allConfigs
+      .filter((config) => this.shouldShowRating(note, config))
+      .map((config) => config.guid);
   }
 }

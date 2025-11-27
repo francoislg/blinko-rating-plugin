@@ -2,7 +2,7 @@
 import { useState } from 'preact/hooks';
 import type { JSXInternal } from 'preact/src/jsx';
 import { StarRating } from './StarRating';
-import { UserAvatar } from './UserAvatar';
+import { UserAvatar } from '../../components/UserAvatar';
 
 interface RatingComponentProps {
   noteId: string;
@@ -12,13 +12,10 @@ interface RatingComponentProps {
   allRatings: Record<string, number>;
   currentUserId: string;
   onRatingChange: (rating: number) => Promise<void>;
+  label?: string;
 }
 
-/**
- * Star rating component for notes
- * Supports multi-user ratings with average display
- */
-export function RatingComponent({ noteId, initialRating, averageRating, voteCount, allRatings, currentUserId, onRatingChange }: RatingComponentProps): JSXInternal.Element {
+export function StarRatingContainer({ noteId, initialRating, averageRating, voteCount, allRatings, currentUserId, onRatingChange, label }: RatingComponentProps): JSXInternal.Element {
   const [rating, setRating] = useState(initialRating);
   const [avgRating, setAvgRating] = useState(averageRating);
   const [votes, setVotes] = useState(voteCount);
@@ -28,7 +25,6 @@ export function RatingComponent({ noteId, initialRating, averageRating, voteCoun
   const [isExpanded, setIsExpanded] = useState(false);
   const i18n = window.Blinko.i18n;
 
-  // Check if we're in multi-user mode (there are votes from other users)
   const otherUsersVotes = Object.entries(localAllRatings).filter(([userId]) => userId !== currentUserId);
   const isMultiUserMode = otherUsersVotes.length > 0;
 
@@ -41,7 +37,6 @@ export function RatingComponent({ noteId, initialRating, averageRating, voteCoun
     const oldAvg = avgRating;
     const oldAllRatings = localAllRatings;
 
-    // Optimistic update
     setRating(newRating);
     const updatedAllRatings = { ...localAllRatings, [currentUserId]: newRating };
     setLocalAllRatings(updatedAllRatings);
@@ -49,16 +44,13 @@ export function RatingComponent({ noteId, initialRating, averageRating, voteCoun
     try {
       await onRatingChange(newRating);
 
-      // Recalculate average and vote count
       let newVotes = oldVotes;
       let newAvg = oldAvg;
 
       if (oldRating === 0 && newRating > 0) {
-        // User is adding a new rating
         newVotes = oldVotes + 1;
         newAvg = ((oldAvg * oldVotes) + newRating) / newVotes;
       } else if (oldRating > 0 && newRating > 0) {
-        // User is changing their rating
         newAvg = ((oldAvg * oldVotes) - oldRating + newRating) / oldVotes;
       }
 
@@ -67,12 +59,10 @@ export function RatingComponent({ noteId, initialRating, averageRating, voteCoun
 
       window.Blinko.toast.success(i18n.t('rating.ratedStars', { count: newRating }));
     } catch (error) {
-      // Rollback on error
       setRating(oldRating);
       setVotes(oldVotes);
       setAvgRating(oldAvg);
       setLocalAllRatings(oldAllRatings);
-      console.error(i18n.t('rating.failedToSave'), error);
       window.Blinko.toast.error(i18n.t('rating.failedToSave'));
     } finally {
       setIsSaving(false);
@@ -88,7 +78,6 @@ export function RatingComponent({ noteId, initialRating, averageRating, voteCoun
     const oldAvg = avgRating;
     const oldAllRatings = localAllRatings;
 
-    // Optimistic update
     setRating(0);
     const updatedAllRatings = { ...localAllRatings };
     delete updatedAllRatings[currentUserId];
@@ -97,7 +86,6 @@ export function RatingComponent({ noteId, initialRating, averageRating, voteCoun
     try {
       await onRatingChange(0);
 
-      // Recalculate average and vote count
       const newVotes = Math.max(0, oldVotes - 1);
       let newAvg = 0;
 
@@ -110,22 +98,17 @@ export function RatingComponent({ noteId, initialRating, averageRating, voteCoun
 
       window.Blinko.toast.success(i18n.t('rating.ratingCleared'));
     } catch (error) {
-      // Rollback on error
       setRating(oldRating);
       setVotes(oldVotes);
       setAvgRating(oldAvg);
       setLocalAllRatings(oldAllRatings);
-      console.error(i18n.t('rating.failedToClear'), error);
       window.Blinko.toast.error(i18n.t('rating.failedToClear'));
     } finally {
       setIsSaving(false);
     }
   };
 
-
-  // Multi-user mode: Show collapsed or expanded view
   if (isMultiUserMode) {
-    // Collapsed view: Show average rating and current user's row with Vote button
     if (!isExpanded) {
       return (
         <div
@@ -143,7 +126,17 @@ export function RatingComponent({ noteId, initialRating, averageRating, voteCoun
           }}
           data-note-id={noteId}
         >
-          {/* Average Rating */}
+          {label && (
+            <div style={{
+              fontSize: '11px',
+              fontWeight: '500',
+              color: 'rgba(128, 128, 128, 0.7)',
+              marginBottom: '8px'
+            }}>
+              {label}
+            </div>
+          )}
+
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -159,7 +152,6 @@ export function RatingComponent({ noteId, initialRating, averageRating, voteCoun
             </span>
           </div>
 
-          {/* Current User Row - Clickable to Expand */}
           <div
             onClick={() => setIsExpanded(true)}
             style={{
@@ -203,7 +195,6 @@ export function RatingComponent({ noteId, initialRating, averageRating, voteCoun
       );
     }
 
-    // Expanded view: Show all users including current user with interactive stars
     return (
       <div
         className="blinko-rating-plugin"
@@ -220,7 +211,17 @@ export function RatingComponent({ noteId, initialRating, averageRating, voteCoun
         }}
         data-note-id={noteId}
       >
-        {/* Average Rating Header */}
+        {label && (
+          <div style={{
+            fontSize: '11px',
+            fontWeight: '500',
+            color: 'rgba(128, 128, 128, 0.7)',
+            marginBottom: '8px'
+          }}>
+            {label}
+          </div>
+        )}
+
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -255,7 +256,6 @@ export function RatingComponent({ noteId, initialRating, averageRating, voteCoun
           </button>
         </div>
 
-        {/* Current User's Interactive Rating */}
         <div style={{
           marginBottom: '12px',
           paddingBottom: '12px',
@@ -324,7 +324,6 @@ export function RatingComponent({ noteId, initialRating, averageRating, voteCoun
           </div>
         </div>
 
-        {/* Other Users' Ratings */}
         <div style={{ fontSize: '12px', color: 'rgba(128, 128, 128, 0.8)', marginBottom: '6px', fontWeight: '500' }}>
           {i18n.t('rating.otherVotes')}
         </div>
@@ -356,7 +355,6 @@ export function RatingComponent({ noteId, initialRating, averageRating, voteCoun
     );
   }
 
-  // Single-user mode: Simple compact view
   return (
     <div
       className="blinko-rating-plugin"
@@ -377,6 +375,17 @@ export function RatingComponent({ noteId, initialRating, averageRating, voteCoun
       }}
       data-note-id={noteId}
     >
+      {label && (
+        <div style={{
+          fontSize: '11px',
+          fontWeight: '500',
+          color: 'rgba(128, 128, 128, 0.7)',
+          marginRight: '8px'
+        }}>
+          {label}
+        </div>
+      )}
+
       <StarRating
         rating={rating}
         hoverRating={hoverRating}

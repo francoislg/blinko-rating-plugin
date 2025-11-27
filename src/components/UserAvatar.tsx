@@ -1,7 +1,7 @@
 /** @jsxImportSource preact */
 import { useState } from 'preact/hooks';
 import type { JSXInternal } from 'preact/src/jsx';
-import { getUserData } from './user-helper';
+import { getUserData } from '../user-helper';
 
 interface UserAvatarProps {
   userId: string;
