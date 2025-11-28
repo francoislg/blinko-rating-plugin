@@ -15,6 +15,7 @@
   "description": "a blinko plugin that adds ratings to notes",
   "scripts": {
     "dev": "blinko-cli dev server --ws-port=8082 --http-port=3002",
+    "typecheck": "tsc --noEmit",
     "ngrok": "ngrok http 8081",
     "release:publish": "vite build --mode production && blinko-cli release plugin"
   },

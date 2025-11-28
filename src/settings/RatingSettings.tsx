@@ -27,7 +27,7 @@ export function Setting(): JSXInternal.Element {
       const result = await window.Blinko.api.tags.list.query();
 
       if (result && Array.isArray(result)) {
-        const tags = result.map((t: any) => t.name);
+        const tags = result.map((t: { name: string }) => t.name);
         setAvailableTags(tags);
       }
     } catch (error) {
@@ -43,7 +43,7 @@ export function Setting(): JSXInternal.Element {
       .query({
         pluginName: 'blinko-rating-plugin',
       })
-      .then((res) => {
+      .then((res: Record<string, string> | null | undefined) => {
         if (res?.ratings) {
           try {
             const pluginConfig = JSON.parse(res.ratings);
