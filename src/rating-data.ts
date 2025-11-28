@@ -8,10 +8,10 @@ export class RatingPluginData {
     note: Note,
     guid: string
   ): Record<string, number> {
-    if (!note?.metadata?.ratings) {
+    if (!note?.metadata?.ratingConfigs?.[guid]) {
       return {};
     }
-    return note.metadata.ratings[guid] || {};
+    return note.metadata.ratingConfigs[guid].ratings || {};
   }
 
   getRating(note: Note, guid: string): number {
@@ -50,11 +50,7 @@ export class RatingPluginData {
     };
   }
 
-  async saveRating(
-    note: Note,
-    guid: string,
-    rating: number
-  ): Promise<void> {
+  async saveRating(note: Note, guid: string, rating: number): Promise<void> {
     const userId = this.config.getUserId();
     const noteId = note.id?.toString() || note._id?.toString();
 
@@ -67,14 +63,27 @@ export class RatingPluginData {
       updatedRatings[userId] = rating;
     }
 
-    const allRatings = {
-      ...(note.metadata?.ratings || {}),
-      [guid]: updatedRatings,
+    const currentRatingConfigs = note.metadata?.ratingConfigs || {};
+    const currentConfig = currentRatingConfigs[guid];
+
+    if (!currentConfig) {
+      throw new Error(
+        `Rating configuration with guid ${guid} not found in note metadata`
+      );
+    }
+
+    const updatedRatingConfigs = {
+      ...currentRatingConfigs,
+      [guid]: {
+        ...currentConfig,
+        ratings: updatedRatings,
+        createdBy: currentConfig.createdBy || userId, // Preserve or set createdBy
+      },
     };
 
     const updatedMetadata = {
       ...(note.metadata || {}),
-      ratings: allRatings,
+      ratingConfigs: updatedRatingConfigs,
     };
 
     try {
@@ -85,40 +94,5 @@ export class RatingPluginData {
     } catch (error) {
       throw error;
     }
-  }
-
-  private shouldShowRating(note: Note, ratingConfig: RatingConfig): boolean {
-    if (!ratingConfig.enabled) {
-      return false;
-    }
-
-    if (!note.tags || note.tags.length === 0) {
-      return ratingConfig.mode === "blacklist" || ratingConfig.tags.length === 0;
-    }
-
-    const noteTags = Array.isArray(note.tags)
-      ? note.tags.map((t) =>
-          typeof t === "object" && "tag" in t ? t.tag.name : String(t)
-        )
-      : [];
-
-    if (ratingConfig.mode === "whitelist") {
-      if (ratingConfig.tags.length === 0) {
-        return true;
-      }
-      return noteTags.some((tag: string) => ratingConfig.tags.includes(tag));
-    } else {
-      if (ratingConfig.tags.length === 0) {
-        return true;
-      }
-      return !noteTags.some((tag: string) => ratingConfig.tags.includes(tag));
-    }
-  }
-
-  getRatingsToDisplay(note: Note): string[] {
-    const allConfigs = this.config.getAllConfigs();
-    return allConfigs
-      .filter((config) => this.shouldShowRating(note, config))
-      .map((config) => config.guid);
   }
 }

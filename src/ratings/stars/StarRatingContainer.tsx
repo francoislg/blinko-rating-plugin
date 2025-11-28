@@ -3,67 +3,36 @@ import { useState } from 'preact/hooks';
 import type { JSXInternal } from 'preact/src/jsx';
 import { StarRating } from './StarRating';
 import { UserAvatar } from '../../components/UserAvatar';
+import { useRatingsStats } from '../../helpers/useRatingsStats';
 
 interface RatingComponentProps {
   noteId: string;
-  initialRating: number;
-  averageRating: number;
-  voteCount: number;
-  allRatings: Record<string, number>;
+  ratings: Record<string, number>;
   currentUserId: string;
   onRatingChange: (rating: number) => Promise<void>;
   label?: string;
 }
 
-export function StarRatingContainer({ noteId, initialRating, averageRating, voteCount, allRatings, currentUserId, onRatingChange, label }: RatingComponentProps): JSXInternal.Element {
-  const [rating, setRating] = useState(initialRating);
-  const [avgRating, setAvgRating] = useState(averageRating);
-  const [votes, setVotes] = useState(voteCount);
-  const [localAllRatings, setLocalAllRatings] = useState(allRatings);
+export function StarRatingContainer({ noteId, ratings, currentUserId, onRatingChange, label }: RatingComponentProps): JSXInternal.Element {
+  const { userRating, averageRating, voteCount, allRatings, otherUsersVotes, isMultiUserMode, updateVote, resetVote } = useRatingsStats(ratings, currentUserId);
+
   const [hoverRating, setHoverRating] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const i18n = window.Blinko.i18n;
 
-  const otherUsersVotes = Object.entries(localAllRatings).filter(([userId]) => userId !== currentUserId);
-  const isMultiUserMode = otherUsersVotes.length > 0;
-
   const handleStarClick = async (newRating: number) => {
     if (isSaving) return;
 
     setIsSaving(true);
-    const oldRating = rating;
-    const oldVotes = votes;
-    const oldAvg = avgRating;
-    const oldAllRatings = localAllRatings;
-
-    setRating(newRating);
-    const updatedAllRatings = { ...localAllRatings, [currentUserId]: newRating };
-    setLocalAllRatings(updatedAllRatings);
+    updateVote(newRating);
 
     try {
       await onRatingChange(newRating);
-
-      let newVotes = oldVotes;
-      let newAvg = oldAvg;
-
-      if (oldRating === 0 && newRating > 0) {
-        newVotes = oldVotes + 1;
-        newAvg = ((oldAvg * oldVotes) + newRating) / newVotes;
-      } else if (oldRating > 0 && newRating > 0) {
-        newAvg = ((oldAvg * oldVotes) - oldRating + newRating) / oldVotes;
-      }
-
-      setVotes(newVotes);
-      setAvgRating(newAvg);
-
-      window.Blinko.toast.success(i18n.t('rating.ratedStars', { count: newRating }));
+      window.Blinko.toast.success(i18n.t('ratings_rating.ratedStars', { count: newRating }));
     } catch (error) {
-      setRating(oldRating);
-      setVotes(oldVotes);
-      setAvgRating(oldAvg);
-      setLocalAllRatings(oldAllRatings);
-      window.Blinko.toast.error(i18n.t('rating.failedToSave'));
+      resetVote();
+      window.Blinko.toast.error(i18n.t('ratings_rating.failedToSave'));
     } finally {
       setIsSaving(false);
     }
@@ -73,36 +42,14 @@ export function StarRatingContainer({ noteId, initialRating, averageRating, vote
     if (isSaving) return;
 
     setIsSaving(true);
-    const oldRating = rating;
-    const oldVotes = votes;
-    const oldAvg = avgRating;
-    const oldAllRatings = localAllRatings;
-
-    setRating(0);
-    const updatedAllRatings = { ...localAllRatings };
-    delete updatedAllRatings[currentUserId];
-    setLocalAllRatings(updatedAllRatings);
+    updateVote(0);
 
     try {
       await onRatingChange(0);
-
-      const newVotes = Math.max(0, oldVotes - 1);
-      let newAvg = 0;
-
-      if (newVotes > 0) {
-        newAvg = ((oldAvg * oldVotes) - oldRating) / newVotes;
-      }
-
-      setVotes(newVotes);
-      setAvgRating(newAvg);
-
-      window.Blinko.toast.success(i18n.t('rating.ratingCleared'));
+      window.Blinko.toast.success(i18n.t('ratings_rating.ratingCleared'));
     } catch (error) {
-      setRating(oldRating);
-      setVotes(oldVotes);
-      setAvgRating(oldAvg);
-      setLocalAllRatings(oldAllRatings);
-      window.Blinko.toast.error(i18n.t('rating.failedToClear'));
+      resetVote();
+      window.Blinko.toast.error(i18n.t('ratings_rating.failedToClear'));
     } finally {
       setIsSaving(false);
     }
@@ -112,83 +59,45 @@ export function StarRatingContainer({ noteId, initialRating, averageRating, vote
     if (!isExpanded) {
       return (
         <div
-          className="blinko-rating-plugin"
-          style={{
-            padding: '12px 8px 8px 8px',
-            marginTop: '12px',
-            borderTop: '1px solid rgba(128, 128, 128, 0.2)',
-            userSelect: 'none',
-            width: '100%',
-            boxSizing: 'border-box',
-            flexShrink: 0,
-            opacity: isSaving ? 0.6 : 1,
-            transition: 'opacity 0.2s'
-          }}
+          className={`blinko-rating-plugin p-3 pt-3 pb-2 mt-3 border-t border-gray-500/20 select-none w-full box-border shrink-0 transition-opacity ${isSaving ? 'opacity-60' : 'opacity-100'}`}
           data-note-id={noteId}
         >
           {label && (
-            <div style={{
-              fontSize: '11px',
-              fontWeight: '500',
-              color: 'rgba(128, 128, 128, 0.7)',
-              marginBottom: '8px'
-            }}>
+            <div className="text-[11px] font-medium text-gray-500/70 mb-2">
               {label}
             </div>
           )}
 
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            marginBottom: '8px',
-            fontSize: '12px',
-            color: 'rgba(128, 128, 128, 0.8)'
-          }}>
-            <span style={{ fontWeight: '500', minWidth: '60px' }}>{i18n.t('rating.average')}</span>
-            <StarRating rating={avgRating} isInteractive={false} />
-            <span style={{ color: 'rgba(128, 128, 128, 0.6)' }}>
-              {avgRating.toFixed(1)}/5 ({votes} {i18n.t('rating.vote', { count: votes })})
+          <div className="flex items-center gap-2 mb-2 text-xs text-gray-500/80">
+            <span className="font-medium min-w-[60px]">{i18n.t('ratings_rating.average')}</span>
+            <StarRating rating={averageRating} isInteractive={false} />
+            <span className="text-gray-500/60">
+              {averageRating.toFixed(1)}/5 ({voteCount} {i18n.t('ratings_rating.vote', { count: voteCount })})
             </span>
           </div>
 
           <div
             onClick={() => setIsExpanded(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6px',
-              background: 'rgba(128, 128, 128, 0.05)',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              transition: 'background 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(128, 128, 128, 0.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(128, 128, 128, 0.05)';
-            }}
+            className="flex items-center gap-2 p-1.5 bg-gray-500/5 rounded-md cursor-pointer transition-colors hover:bg-gray-500/10"
           >
             <UserAvatar userId={currentUserId} size={24} isCurrentUser={true} />
-            <div style={{ fontSize: '11px', color: 'rgba(128, 128, 128, 0.7)', minWidth: '60px' }}>
-              {i18n.t('rating.you')}
+            <div className="text-[11px] text-gray-500/70 min-w-[60px]">
+              {i18n.t('ratings_rating.you')}
             </div>
-            {rating > 0 ? (
+            {userRating > 0 ? (
               <>
-                <StarRating rating={rating} isInteractive={false} />
-                <div style={{ fontSize: '11px', color: 'rgba(128, 128, 128, 0.6)', marginLeft: '4px' }}>
-                  ({rating}/5)
+                <StarRating rating={userRating} isInteractive={false} />
+                <div className="text-[11px] text-gray-500/60 ml-1">
+                  ({userRating}/5)
                 </div>
               </>
             ) : (
-              <div style={{ fontSize: '11px', color: 'rgba(128, 128, 128, 0.6)' }}>
-                {i18n.t('rating.notRated')}
+              <div className="text-[11px] text-gray-500/60">
+                {i18n.t('ratings_rating.notRated')}
               </div>
             )}
-            <div style={{ marginLeft: 'auto', fontSize: '11px', color: 'rgba(128, 128, 128, 0.7)', fontWeight: '500' }}>
-              {i18n.t('rating.voteButton')}
+            <div className="ml-auto text-[11px] text-gray-500/70 font-medium">
+              {i18n.t('ratings_rating.voteButton')}
             </div>
           </div>
         </div>
@@ -197,86 +106,34 @@ export function StarRatingContainer({ noteId, initialRating, averageRating, vote
 
     return (
       <div
-        className="blinko-rating-plugin"
-        style={{
-          padding: '12px 8px 8px 8px',
-          marginTop: '12px',
-          borderTop: '1px solid rgba(128, 128, 128, 0.2)',
-          userSelect: 'none',
-          width: '100%',
-          boxSizing: 'border-box',
-          flexShrink: 0,
-          opacity: isSaving ? 0.6 : 1,
-          transition: 'opacity 0.2s'
-        }}
+        className={`blinko-rating-plugin p-3 pt-3 pb-2 mt-3 border-t border-gray-500/20 select-none w-full box-border shrink-0 transition-opacity ${isSaving ? 'opacity-60' : 'opacity-100'}`}
         data-note-id={noteId}
       >
         {label && (
-          <div style={{
-            fontSize: '11px',
-            fontWeight: '500',
-            color: 'rgba(128, 128, 128, 0.7)',
-            marginBottom: '8px'
-          }}>
+          <div className="text-[11px] font-medium text-gray-500/70 mb-2">
             {label}
           </div>
         )}
 
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '12px',
-          fontSize: '13px',
-          color: 'rgba(128, 128, 128, 0.9)',
-          fontWeight: '500'
-        }}>
-          <span>{i18n.t('rating.average')} {avgRating.toFixed(1)}/5</span>
-          <span>({votes} {i18n.t('rating.vote', { count: votes })})</span>
+        <div className="flex items-center justify-between mb-3 text-[13px] text-gray-500/90 font-medium">
+          <span>{i18n.t('ratings_rating.average')} {averageRating.toFixed(1)}/5</span>
+          <span>({voteCount} {i18n.t('ratings_rating.vote', { count: voteCount })})</span>
           <button
             onClick={() => setIsExpanded(false)}
-            style={{
-              padding: '2px 8px',
-              fontSize: '11px',
-              cursor: 'pointer',
-              border: '1px solid rgba(128, 128, 128, 0.3)',
-              borderRadius: '4px',
-              background: 'transparent',
-              color: 'rgba(128, 128, 128, 0.8)',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(128, 128, 128, 0.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-            }}
+            className="px-2 py-0.5 text-[11px] cursor-pointer border border-gray-500/30 rounded bg-transparent text-gray-500/80 transition-all hover:bg-gray-500/10"
           >
-            {i18n.t('rating.collapse')}
+            {i18n.t('ratings_rating.collapse')}
           </button>
         </div>
 
-        <div style={{
-          marginBottom: '12px',
-          paddingBottom: '12px',
-          borderBottom: '1px solid rgba(128, 128, 128, 0.1)'
-        }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6px',
-              background: 'rgba(128, 128, 128, 0.05)',
-              borderRadius: '6px'
-            }}
-          >
+        <div className="mb-3 pb-3 border-b border-gray-500/10">
+          <div className="flex items-center gap-2 p-1.5 bg-gray-500/5 rounded-md">
             <UserAvatar userId={currentUserId} size={24} isCurrentUser={true} />
-            <div style={{ fontSize: '11px', color: 'rgba(128, 128, 128, 0.7)', minWidth: '60px' }}>
-              {i18n.t('rating.you')}
+            <div className="text-[11px] text-gray-500/70 min-w-[60px]">
+              {i18n.t('ratings_rating.you')}
             </div>
             <StarRating
-              rating={rating}
+              rating={userRating}
               hoverRating={hoverRating}
               isInteractive={true}
               onStarClick={handleStarClick}
@@ -284,68 +141,38 @@ export function StarRatingContainer({ noteId, initialRating, averageRating, vote
               onStarLeave={() => setHoverRating(0)}
               disabled={isSaving}
             />
-            {rating > 0 && (
+            {userRating > 0 && (
               <>
-                <div style={{ fontSize: '11px', color: 'rgba(128, 128, 128, 0.6)', marginLeft: '4px' }}>
-                  ({rating}/5)
+                <div className="text-[11px] text-gray-500/60 ml-1">
+                  ({userRating}/5)
                 </div>
                 <button
                   onClick={handleClearRating}
                   disabled={isSaving}
-                  style={{
-                    padding: '2px 8px',
-                    fontSize: '11px',
-                    cursor: isSaving ? 'wait' : 'pointer',
-                    border: '1px solid rgba(128, 128, 128, 0.3)',
-                    borderRadius: '4px',
-                    background: 'transparent',
-                    color: 'rgba(128, 128, 128, 0.8)',
-                    transition: 'all 0.2s',
-                    opacity: isSaving ? 0.5 : 1,
-                    marginLeft: 'auto'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isSaving) {
-                      e.currentTarget.style.background = 'rgba(255, 0, 0, 0.1)';
-                      e.currentTarget.style.borderColor = 'rgba(255, 0, 0, 0.5)';
-                      e.currentTarget.style.color = 'rgba(255, 0, 0, 0.8)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.borderColor = 'rgba(128, 128, 128, 0.3)';
-                    e.currentTarget.style.color = 'rgba(128, 128, 128, 0.8)';
-                  }}
+                  className={`ml-auto px-2 py-0.5 text-[11px] border border-gray-500/30 rounded bg-transparent text-gray-500/80 transition-all hover:bg-red-500/10 hover:border-red-500/50 hover:text-red-500/80 ${isSaving ? 'cursor-wait opacity-50' : 'cursor-pointer'}`}
                 >
-                  {i18n.t('rating.clear')}
+                  {i18n.t('ratings_rating.clear')}
                 </button>
               </>
             )}
           </div>
         </div>
 
-        <div style={{ fontSize: '12px', color: 'rgba(128, 128, 128, 0.8)', marginBottom: '6px', fontWeight: '500' }}>
-          {i18n.t('rating.otherVotes')}
+        <div className="text-xs text-gray-500/80 mb-1.5 font-medium">
+          {i18n.t('ratings_rating.otherVotes')}
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="flex flex-col gap-2">
           {otherUsersVotes.map(([userId, userRating]) => (
             <div
               key={userId}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '6px',
-                background: 'rgba(128, 128, 128, 0.05)',
-                borderRadius: '6px'
-              }}
+              className="flex items-center gap-2 p-1.5 bg-gray-500/5 rounded-md"
             >
               <UserAvatar userId={userId} size={24} isCurrentUser={false} />
-              <div style={{ fontSize: '11px', color: 'rgba(128, 128, 128, 0.7)', minWidth: '60px' }}>
-                {i18n.t('rating.user', { id: userId.substring(0, 6) })}
+              <div className="text-[11px] text-gray-500/70 min-w-[60px]">
+                {i18n.t('ratings_rating.user', { id: userId.substring(0, 6) })}
               </div>
               <StarRating rating={userRating} isInteractive={false} />
-              <div style={{ fontSize: '11px', color: 'rgba(128, 128, 128, 0.6)', marginLeft: '4px' }}>
+              <div className="text-[11px] text-gray-500/60 ml-1">
                 ({userRating}/5)
               </div>
             </div>
@@ -357,37 +184,17 @@ export function StarRatingContainer({ noteId, initialRating, averageRating, vote
 
   return (
     <div
-      className="blinko-rating-plugin"
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '4px',
-        padding: '12px 8px 8px 8px',
-        marginTop: '12px',
-        borderTop: '1px solid rgba(128, 128, 128, 0.2)',
-        fontSize: '18px',
-        userSelect: 'none',
-        width: '100%',
-        boxSizing: 'border-box',
-        flexShrink: 0,
-        opacity: isSaving ? 0.6 : 1,
-        transition: 'opacity 0.2s'
-      }}
+      className={`blinko-rating-plugin flex items-center gap-1 p-3 pt-3 pb-2 mt-3 border-t border-gray-500/20 text-lg select-none w-full box-border shrink-0 transition-opacity ${isSaving ? 'opacity-60' : 'opacity-100'}`}
       data-note-id={noteId}
     >
       {label && (
-        <div style={{
-          fontSize: '11px',
-          fontWeight: '500',
-          color: 'rgba(128, 128, 128, 0.7)',
-          marginRight: '8px'
-        }}>
+        <div className="text-[11px] font-medium text-gray-500/70 mr-2">
           {label}
         </div>
       )}
 
       <StarRating
-        rating={rating}
+        rating={userRating}
         hoverRating={hoverRating}
         isInteractive={true}
         onStarClick={handleStarClick}
@@ -395,45 +202,16 @@ export function StarRatingContainer({ noteId, initialRating, averageRating, vote
         onStarLeave={() => setHoverRating(0)}
         disabled={isSaving}
       />
-      <span
-        style={{
-          fontSize: '12px',
-          color: 'rgba(128, 128, 128, 0.8)',
-          marginLeft: '8px'
-        }}
-      >
-        {rating > 0 ? `${rating}/5` : i18n.t('rating.notRatedShort')}
+      <span className="text-xs text-gray-500/80 ml-2">
+        {userRating > 0 ? `${userRating}/5` : i18n.t('ratings_rating.notRatedShort')}
       </span>
-      {rating > 0 && (
+      {userRating > 0 && (
         <button
           onClick={handleClearRating}
           disabled={isSaving}
-          style={{
-            marginLeft: '8px',
-            padding: '2px 8px',
-            fontSize: '11px',
-            cursor: isSaving ? 'wait' : 'pointer',
-            border: '1px solid rgba(128, 128, 128, 0.3)',
-            borderRadius: '4px',
-            background: 'transparent',
-            color: 'rgba(128, 128, 128, 0.8)',
-            transition: 'all 0.2s',
-            opacity: isSaving ? 0.5 : 1
-          }}
-          onMouseEnter={(e) => {
-            if (!isSaving) {
-              e.currentTarget.style.background = 'rgba(255, 0, 0, 0.1)';
-              e.currentTarget.style.borderColor = 'rgba(255, 0, 0, 0.5)';
-              e.currentTarget.style.color = 'rgba(255, 0, 0, 0.8)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.borderColor = 'rgba(128, 128, 128, 0.3)';
-            e.currentTarget.style.color = 'rgba(128, 128, 128, 0.8)';
-          }}
+          className={`ml-2 px-2 py-0.5 text-[11px] border border-gray-500/30 rounded bg-transparent text-gray-500/80 transition-all hover:bg-red-500/10 hover:border-red-500/50 hover:text-red-500/80 ${isSaving ? 'cursor-wait opacity-50' : 'cursor-pointer'}`}
         >
-          {i18n.t('rating.clear')}
+          {i18n.t('ratings_rating.clear')}
         </button>
       )}
     </div>

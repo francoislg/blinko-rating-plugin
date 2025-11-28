@@ -1,5 +1,5 @@
 {
-  "settings": {
+  "ratings_settings": {
     "pluginTitle": "Paramètres du plugin d'évaluation",
     "noRatings": "Aucune évaluation configurée. Cliquez sur « Ajouter une nouvelle évaluation » pour commencer.",
     "enabled": "Activé",
@@ -34,13 +34,21 @@
     "nameRequired": "Le nom de l'évaluation est requis",
     "ratingAdded": "Évaluation ajoutée avec succès !",
     "saveSettings": "Enregistrer les paramètres",
+    "saveAndSync": "Enregistrer et synchroniser les notes",
+    "doNotSyncOnSave": "Ne pas synchroniser lors de l'enregistrement",
     "cancel": "Annuler",
     "settingsSaved": "Paramètres enregistrés !",
+    "savedAndSynced": "Paramètres enregistrés et notes synchronisées !",
     "failedToSave": "Échec de l'enregistrement des paramètres",
     "failedToFetchTags": "Échec de la récupération des étiquettes :",
-    "failedToParseConfig": "Échec de l'analyse de la configuration :"
+    "failedToParseConfig": "Échec de l'analyse de la configuration :",
+    "syncCardsButton": "Synchroniser les cartes vers toutes les notes",
+    "syncing": "Synchronisation...",
+    "syncingCards": "Synchronisation des configurations d'évaluation vers toutes les notes...",
+    "cardsSynced": "Configurations d'évaluation synchronisées avec succès vers toutes les notes !",
+    "failedToSync": "Échec de la synchronisation des cartes"
   },
-  "rating": {
+  "ratings_rating": {
     "ratedStars": "Noté {{count}} étoile !",
     "ratedStars_plural": "Noté {{count}} étoiles !",
     "ratingCleared": "Note effacée",

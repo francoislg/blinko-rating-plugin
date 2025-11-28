@@ -1,5 +1,5 @@
 {
-  "settings": {
+  "ratings_settings": {
     "pluginTitle": "评分插件设置",
     "noRatings": "未配置评分。点击\"添加新评分\"开始使用。",
     "enabled": "已启用",
@@ -34,13 +34,21 @@
     "nameRequired": "评分名称是必需的",
     "ratingAdded": "评分添加成功！",
     "saveSettings": "保存设置",
+    "saveAndSync": "保存并同步笔记",
+    "doNotSyncOnSave": "保存时不同步",
     "cancel": "取消",
     "settingsSaved": "设置已保存！",
+    "savedAndSynced": "设置已保存并同步笔记！",
     "failedToSave": "保存设置失败",
     "failedToFetchTags": "获取标签失败：",
-    "failedToParseConfig": "解析配置失败："
+    "failedToParseConfig": "解析配置失败：",
+    "syncCardsButton": "同步卡片到所有笔记",
+    "syncing": "正在同步...",
+    "syncingCards": "正在同步评分配置到所有笔记...",
+    "cardsSynced": "成功同步评分配置到所有笔记！",
+    "failedToSync": "同步卡片失败"
   },
-  "rating": {
+  "ratings_rating": {
     "ratedStars": "已评分 {{count}} 星！",
     "ratedStars_plural": "已评分 {{count}} 星！",
     "ratingCleared": "评分已清除",

@@ -23,21 +23,16 @@ export function StarRating({
   const displayRating = hoverRating || rating;
 
   return (
-    <div style={{ display: 'flex', gap: '4px' }}>
+    <div className="flex gap-1">
       {[1, 2, 3, 4, 5].map((starValue) => (
         <span
           key={starValue}
           onClick={isInteractive && !disabled && onStarClick ? () => onStarClick(starValue) : undefined}
           onMouseEnter={isInteractive && !disabled && onStarHover ? () => onStarHover(starValue) : undefined}
           onMouseLeave={isInteractive && !disabled && onStarLeave ? onStarLeave : undefined}
-          style={{
-            cursor: isInteractive && !disabled ? 'pointer' : 'default',
-            transition: 'transform 0.2s ease',
-            display: 'inline-block',
-            transform: (isInteractive && hoverRating === starValue) ? 'scale(1.4)' : 'scale(1.2)',
-            transformOrigin: 'center',
-            fontSize: '18px'
-          }}
+          className={`inline-block transition-transform duration-200 origin-center text-lg ${
+            isInteractive && !disabled ? 'cursor-pointer' : 'cursor-default'
+          } ${isInteractive && hoverRating === starValue ? 'scale-140' : 'scale-120'}`}
           data-rating={starValue}
         >
           {starValue <= displayRating ? '⭐' : '☆'}

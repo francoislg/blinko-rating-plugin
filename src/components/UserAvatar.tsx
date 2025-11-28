@@ -15,32 +15,20 @@ export function UserAvatar({ userId, size = 24, isCurrentUser = false }: UserAva
 
   const initials = userId.substring(0, 2).toUpperCase();
 
-  const containerStyle = {
-    width: `${size}px`,
-    height: `${size}px`,
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    overflow: 'hidden',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    color: 'white',
-    fontSize: `${size * 0.4}px`,
-    fontWeight: 'bold'
-  } as const;
-
   if (userData.avatarUrl && !imageError) {
     return (
-      <div style={containerStyle}>
+      <div
+        className="rounded-full flex items-center justify-center shrink-0 overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold"
+        style={{
+          width: `${size}px`,
+          height: `${size}px`,
+          fontSize: `${size * 0.4}px`
+        }}
+      >
         <img
           src={userData.avatarUrl}
           alt={userData.nickname || `User ${userId}`}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover'
-          }}
+          className="w-full h-full object-cover"
           onError={() => setImageError(true)}
         />
       </div>
@@ -48,7 +36,14 @@ export function UserAvatar({ userId, size = 24, isCurrentUser = false }: UserAva
   }
 
   return (
-    <div style={containerStyle}>
+    <div
+      className="rounded-full flex items-center justify-center shrink-0 overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold"
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+        fontSize: `${size * 0.4}px`
+      }}
+    >
       {initials}
     </div>
   );

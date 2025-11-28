@@ -2,152 +2,76 @@
 import { useState } from 'preact/hooks';
 import type { JSXInternal } from 'preact/src/jsx';
 import { UserAvatar } from '../../components/UserAvatar';
+import { useRatingsStats } from '../../helpers/useRatingsStats';
 
 interface UpvoteComponentProps {
   noteId: string;
-  initialRating: number;
-  averageRating: number;
-  voteCount: number;
-  allRatings: Record<string, number>;
+  ratings: Record<string, number>;
   currentUserId: string;
   onRatingChange: (rating: number) => Promise<void>;
   label?: string;
 }
 
-export function UpvoteContainer({ noteId, initialRating, averageRating, voteCount, allRatings, currentUserId, onRatingChange, label }: UpvoteComponentProps): JSXInternal.Element {
-  const [vote, setVote] = useState(initialRating);
-  const [totalPoints, setTotalPoints] = useState(Object.values(allRatings).reduce((sum, v) => sum + v, 0));
-  const [votes, setVotes] = useState(voteCount);
-  const [localAllRatings, setLocalAllRatings] = useState(allRatings);
+export function UpvoteContainer({ noteId, ratings, currentUserId, onRatingChange, label }: UpvoteComponentProps): JSXInternal.Element {
+  const { userRating, totalPoints, voteCount, allRatings, otherUsersVotes, isMultiUserMode, updateVote, resetVote } = useRatingsStats(ratings, currentUserId);
+
   const [isSaving, setIsSaving] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const i18n = window.Blinko.i18n;
 
-  const otherUsersVotes = Object.entries(localAllRatings).filter(([userId]) => userId !== currentUserId);
-  const isMultiUserMode = otherUsersVotes.length > 0;
-
   const handleVote = async (newVote: number) => {
     if (isSaving) return;
 
-    const actualVote = vote === newVote ? 0 : newVote;
+    const actualVote = userRating === newVote ? 0 : newVote;
 
     setIsSaving(true);
-    const oldVote = vote;
-    const oldPoints = totalPoints;
-    const oldVotes = votes;
-    const oldAllRatings = localAllRatings;
-
-    setVote(actualVote);
-    const updatedAllRatings = actualVote === 0
-      ? { ...localAllRatings }
-      : { ...localAllRatings, [currentUserId]: actualVote };
-
-    if (actualVote === 0) {
-      delete updatedAllRatings[currentUserId];
-    }
-
-    setLocalAllRatings(updatedAllRatings);
+    updateVote(actualVote);
 
     try {
       await onRatingChange(actualVote);
 
-      let newVotes = oldVotes;
-      let newPoints = oldPoints;
-
-      if (oldVote === 0 && actualVote !== 0) {
-        newVotes = oldVotes + 1;
-        newPoints = oldPoints + actualVote;
-      } else if (oldVote !== 0 && actualVote === 0) {
-        newVotes = Math.max(0, oldVotes - 1);
-        newPoints = oldPoints - oldVote;
-      } else if (oldVote !== 0 && actualVote !== 0) {
-        newPoints = oldPoints - oldVote + actualVote;
-      }
-
-      setVotes(newVotes);
-      setTotalPoints(newPoints);
-
       if (actualVote === 0) {
-        window.Blinko.toast.success(i18n.t('rating.voteCleared'));
+        window.Blinko.toast.success(i18n.t('ratings_rating.voteCleared'));
       } else {
         window.Blinko.toast.success(
           actualVote === 1
-            ? i18n.t('rating.upvoted')
-            : i18n.t('rating.downvoted')
+            ? i18n.t('ratings_rating.upvoted')
+            : i18n.t('ratings_rating.downvoted')
         );
       }
     } catch (error) {
-      setVote(oldVote);
-      setVotes(oldVotes);
-      setTotalPoints(oldPoints);
-      setLocalAllRatings(oldAllRatings);
-      window.Blinko.toast.error(i18n.t('rating.failedToSave'));
+      resetVote();
+      window.Blinko.toast.error(i18n.t('ratings_rating.failedToSave'));
     } finally {
       setIsSaving(false);
     }
   };
 
   const VoteButtons = ({ currentVote, onVote, disabled }: { currentVote: number, onVote: (vote: number) => void, disabled: boolean }) => (
-    <div style={{ display: 'flex', gap: '4px' }}>
+    <div className="flex gap-1">
       <button
         onClick={() => onVote(1)}
         disabled={disabled}
-        style={{
-          padding: '4px 10px',
-          fontSize: '14px',
-          cursor: disabled ? 'wait' : 'pointer',
-          border: '1px solid rgba(128, 128, 128, 0.3)',
-          borderRadius: '4px',
-          background: currentVote === 1 ? 'rgba(0, 255, 0, 0.1)' : 'transparent',
-          color: currentVote === 1 ? 'rgba(0, 200, 0, 0.9)' : 'rgba(128, 128, 128, 0.8)',
-          borderColor: currentVote === 1 ? 'rgba(0, 200, 0, 0.5)' : 'rgba(128, 128, 128, 0.3)',
-          transition: 'all 0.2s',
-          opacity: disabled ? 0.5 : 1,
-          fontWeight: currentVote === 1 ? '600' : '400'
-        }}
-        onMouseEnter={(e) => {
-          if (!disabled) {
-            e.currentTarget.style.background = 'rgba(0, 255, 0, 0.15)';
-            e.currentTarget.style.borderColor = 'rgba(0, 200, 0, 0.5)';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!disabled) {
-            e.currentTarget.style.background = currentVote === 1 ? 'rgba(0, 255, 0, 0.1)' : 'transparent';
-            e.currentTarget.style.borderColor = currentVote === 1 ? 'rgba(0, 200, 0, 0.5)' : 'rgba(128, 128, 128, 0.3)';
-          }
-        }}
+        className={`px-2.5 py-1 text-sm border rounded transition-all ${
+          disabled ? 'cursor-wait opacity-50' : 'cursor-pointer'
+        } ${
+          currentVote === 1
+            ? 'bg-green-500/10 text-green-600 border-green-600/50 font-semibold'
+            : 'bg-transparent text-gray-500/80 border-gray-500/30 hover:bg-green-500/15 hover:border-green-600/50'
+        }`}
       >
         +1
       </button>
       <button
         onClick={() => onVote(-1)}
         disabled={disabled}
-        style={{
-          padding: '4px 10px',
-          fontSize: '14px',
-          cursor: disabled ? 'wait' : 'pointer',
-          border: '1px solid rgba(128, 128, 128, 0.3)',
-          borderRadius: '4px',
-          background: currentVote === -1 ? 'rgba(255, 0, 0, 0.1)' : 'transparent',
-          color: currentVote === -1 ? 'rgba(255, 0, 0, 0.9)' : 'rgba(128, 128, 128, 0.8)',
-          borderColor: currentVote === -1 ? 'rgba(255, 0, 0, 0.5)' : 'rgba(128, 128, 128, 0.3)',
-          transition: 'all 0.2s',
-          opacity: disabled ? 0.5 : 1,
-          fontWeight: currentVote === -1 ? '600' : '400'
-        }}
-        onMouseEnter={(e) => {
-          if (!disabled) {
-            e.currentTarget.style.background = 'rgba(255, 0, 0, 0.15)';
-            e.currentTarget.style.borderColor = 'rgba(255, 0, 0, 0.5)';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!disabled) {
-            e.currentTarget.style.background = currentVote === -1 ? 'rgba(255, 0, 0, 0.1)' : 'transparent';
-            e.currentTarget.style.borderColor = currentVote === -1 ? 'rgba(255, 0, 0, 0.5)' : 'rgba(128, 128, 128, 0.3)';
-          }
-        }}
+        className={`px-2.5 py-1 text-sm border rounded transition-all ${
+          disabled ? 'cursor-wait opacity-50' : 'cursor-pointer'
+        } ${
+          currentVote === -1
+            ? 'bg-red-500/10 text-red-600 border-red-600/50 font-semibold'
+            : 'bg-transparent text-gray-500/80 border-gray-500/30 hover:bg-red-500/15 hover:border-red-600/50'
+        }`}
       >
         -1
       </button>
@@ -158,90 +82,48 @@ export function UpvoteContainer({ noteId, initialRating, averageRating, voteCoun
     if (!isExpanded) {
       return (
         <div
-          className="blinko-upvote-plugin"
-          style={{
-            padding: '12px 8px 8px 8px',
-            marginTop: '12px',
-            borderTop: '1px solid rgba(128, 128, 128, 0.2)',
-            userSelect: 'none',
-            width: '100%',
-            boxSizing: 'border-box',
-            flexShrink: 0,
-            opacity: isSaving ? 0.6 : 1,
-            transition: 'opacity 0.2s'
-          }}
+          className={`blinko-upvote-plugin p-3 pt-3 pb-2 mt-3 border-t border-gray-500/20 select-none w-full box-border shrink-0 transition-opacity ${isSaving ? 'opacity-60' : 'opacity-100'}`}
           data-note-id={noteId}
         >
           {label && (
-            <div style={{
-              fontSize: '11px',
-              fontWeight: '500',
-              color: 'rgba(128, 128, 128, 0.7)',
-              marginBottom: '8px'
-            }}>
+            <div className="text-[11px] font-medium text-gray-500/70 mb-2">
               {label}
             </div>
           )}
 
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            marginBottom: '8px',
-            fontSize: '12px',
-            color: 'rgba(128, 128, 128, 0.8)'
-          }}>
-            <span style={{ fontWeight: '500', minWidth: '80px' }}>{i18n.t('rating.totalPoints')}</span>
-            <span style={{
-              fontWeight: '600',
-              fontSize: '14px',
-              color: totalPoints > 0 ? 'rgba(0, 200, 0, 0.9)' : totalPoints < 0 ? 'rgba(255, 0, 0, 0.9)' : 'rgba(128, 128, 128, 0.8)'
-            }}>
+          <div className="flex items-center gap-2 mb-2 text-xs text-gray-500/80">
+            <span className="font-medium min-w-[80px]">{i18n.t('ratings_rating.totalPoints')}</span>
+            <span className={`text-sm font-semibold ${
+              totalPoints > 0 ? 'text-green-600' : totalPoints < 0 ? 'text-red-600' : 'text-gray-500/80'
+            }`}>
               {totalPoints > 0 ? '+' : ''}{totalPoints}
             </span>
-            <span style={{ color: 'rgba(128, 128, 128, 0.6)' }}>
-              ({votes} {i18n.t('rating.vote', { count: votes })})
+            <span className="text-gray-500/60">
+              ({voteCount} {i18n.t('ratings_rating.vote', { count: voteCount })})
             </span>
           </div>
 
           <div
             onClick={() => setIsExpanded(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6px',
-              background: 'rgba(128, 128, 128, 0.05)',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              transition: 'background 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(128, 128, 128, 0.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(128, 128, 128, 0.05)';
-            }}
+            className="flex items-center gap-2 p-1.5 bg-gray-500/5 rounded-md cursor-pointer transition-colors hover:bg-gray-500/10"
           >
             <UserAvatar userId={currentUserId} size={24} isCurrentUser={true} />
-            <div style={{ fontSize: '11px', color: 'rgba(128, 128, 128, 0.7)', minWidth: '60px' }}>
-              {i18n.t('rating.you')}
+            <div className="text-[11px] text-gray-500/70 min-w-[60px]">
+              {i18n.t('ratings_rating.you')}
             </div>
-            {vote !== 0 ? (
-              <div style={{
-                fontSize: '12px',
-                fontWeight: '600',
-                color: vote === 1 ? 'rgba(0, 200, 0, 0.9)' : 'rgba(255, 0, 0, 0.9)'
-              }}>
-                {vote === 1 ? '+1' : '-1'}
+            {userRating !== 0 ? (
+              <div className={`text-xs font-semibold ${
+                userRating === 1 ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {userRating === 1 ? '+1' : '-1'}
               </div>
             ) : (
-              <div style={{ fontSize: '11px', color: 'rgba(128, 128, 128, 0.6)' }}>
-                {i18n.t('rating.notVoted')}
+              <div className="text-[11px] text-gray-500/60">
+                {i18n.t('ratings_rating.notVoted')}
               </div>
             )}
-            <div style={{ marginLeft: 'auto', fontSize: '11px', color: 'rgba(128, 128, 128, 0.7)', fontWeight: '500' }}>
-              {i18n.t('rating.voteButton')}
+            <div className="ml-auto text-[11px] text-gray-500/70 font-medium">
+              {i18n.t('ratings_rating.voteButton')}
             </div>
           </div>
         </div>
@@ -250,130 +132,63 @@ export function UpvoteContainer({ noteId, initialRating, averageRating, voteCoun
 
     return (
       <div
-        className="blinko-upvote-plugin"
-        style={{
-          padding: '12px 8px 8px 8px',
-          marginTop: '12px',
-          borderTop: '1px solid rgba(128, 128, 128, 0.2)',
-          userSelect: 'none',
-          width: '100%',
-          boxSizing: 'border-box',
-          flexShrink: 0,
-          opacity: isSaving ? 0.6 : 1,
-          transition: 'opacity 0.2s'
-        }}
+        className={`blinko-upvote-plugin p-3 pt-3 pb-2 mt-3 border-t border-gray-500/20 select-none w-full box-border shrink-0 transition-opacity ${isSaving ? 'opacity-60' : 'opacity-100'}`}
         data-note-id={noteId}
       >
         {label && (
-          <div style={{
-            fontSize: '11px',
-            fontWeight: '500',
-            color: 'rgba(128, 128, 128, 0.7)',
-            marginBottom: '8px'
-          }}>
+          <div className="text-[11px] font-medium text-gray-500/70 mb-2">
             {label}
           </div>
         )}
 
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '12px',
-          fontSize: '13px',
-          color: 'rgba(128, 128, 128, 0.9)',
-          fontWeight: '500'
-        }}>
-          <span>{i18n.t('rating.totalPoints')}
-            <span style={{
-              fontWeight: '600',
-              marginLeft: '8px',
-              color: totalPoints > 0 ? 'rgba(0, 200, 0, 0.9)' : totalPoints < 0 ? 'rgba(255, 0, 0, 0.9)' : 'rgba(128, 128, 128, 0.8)'
-            }}>
+        <div className="flex items-center justify-between mb-3 text-[13px] text-gray-500/90 font-medium">
+          <span>{i18n.t('ratings_rating.totalPoints')}
+            <span className={`ml-2 font-semibold ${
+              totalPoints > 0 ? 'text-green-600' : totalPoints < 0 ? 'text-red-600' : 'text-gray-500/80'
+            }`}>
               {totalPoints > 0 ? '+' : ''}{totalPoints}
             </span>
           </span>
-          <span>({votes} {i18n.t('rating.vote', { count: votes })})</span>
+          <span>({voteCount} {i18n.t('ratings_rating.vote', { count: voteCount })})</span>
           <button
             onClick={() => setIsExpanded(false)}
-            style={{
-              padding: '2px 8px',
-              fontSize: '11px',
-              cursor: 'pointer',
-              border: '1px solid rgba(128, 128, 128, 0.3)',
-              borderRadius: '4px',
-              background: 'transparent',
-              color: 'rgba(128, 128, 128, 0.8)',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(128, 128, 128, 0.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-            }}
+            className="px-2 py-0.5 text-[11px] cursor-pointer border border-gray-500/30 rounded bg-transparent text-gray-500/80 transition-all hover:bg-gray-500/10"
           >
-            {i18n.t('rating.collapse')}
+            {i18n.t('ratings_rating.collapse')}
           </button>
         </div>
 
-        <div style={{
-          marginBottom: '12px',
-          paddingBottom: '12px',
-          borderBottom: '1px solid rgba(128, 128, 128, 0.1)'
-        }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '6px',
-              background: 'rgba(128, 128, 128, 0.05)',
-              borderRadius: '6px'
-            }}
-          >
+        <div className="mb-3 pb-3 border-b border-gray-500/10">
+          <div className="flex items-center gap-2 p-1.5 bg-gray-500/5 rounded-md">
             <UserAvatar userId={currentUserId} size={24} isCurrentUser={true} />
-            <div style={{ fontSize: '11px', color: 'rgba(128, 128, 128, 0.7)', minWidth: '60px' }}>
-              {i18n.t('rating.you')}
+            <div className="text-[11px] text-gray-500/70 min-w-[60px]">
+              {i18n.t('ratings_rating.you')}
             </div>
-            <VoteButtons currentVote={vote} onVote={handleVote} disabled={isSaving} />
-            {vote !== 0 && (
-              <div style={{
-                fontSize: '11px',
-                color: 'rgba(128, 128, 128, 0.6)',
-                marginLeft: '4px'
-              }}>
-                ({vote === 1 ? '+1' : '-1'})
+            <VoteButtons currentVote={userRating} onVote={handleVote} disabled={isSaving} />
+            {userRating !== 0 && (
+              <div className="text-[11px] text-gray-500/60 ml-1">
+                ({userRating === 1 ? '+1' : '-1'})
               </div>
             )}
           </div>
         </div>
 
-        <div style={{ fontSize: '12px', color: 'rgba(128, 128, 128, 0.8)', marginBottom: '6px', fontWeight: '500' }}>
-          {i18n.t('rating.otherVotes')}
+        <div className="text-xs text-gray-500/80 mb-1.5 font-medium">
+          {i18n.t('ratings_rating.otherVotes')}
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="flex flex-col gap-2">
           {otherUsersVotes.map(([userId, userVote]) => (
             <div
               key={userId}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '6px',
-                background: 'rgba(128, 128, 128, 0.05)',
-                borderRadius: '6px'
-              }}
+              className="flex items-center gap-2 p-1.5 bg-gray-500/5 rounded-md"
             >
               <UserAvatar userId={userId} size={24} isCurrentUser={false} />
-              <div style={{ fontSize: '11px', color: 'rgba(128, 128, 128, 0.7)', minWidth: '60px' }}>
-                {i18n.t('rating.user', { id: userId.substring(0, 6) })}
+              <div className="text-[11px] text-gray-500/70 min-w-[60px]">
+                {i18n.t('ratings_rating.user', { id: userId.substring(0, 6) })}
               </div>
-              <div style={{
-                fontSize: '12px',
-                fontWeight: '600',
-                color: userVote === 1 ? 'rgba(0, 200, 0, 0.9)' : 'rgba(255, 0, 0, 0.9)'
-              }}>
+              <div className={`text-xs font-semibold ${
+                userVote === 1 ? 'text-green-600' : 'text-red-600'
+              }`}>
                 {userVote === 1 ? '+1' : '-1'}
               </div>
             </div>
@@ -385,44 +200,18 @@ export function UpvoteContainer({ noteId, initialRating, averageRating, voteCoun
 
   return (
     <div
-      className="blinko-upvote-plugin"
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        padding: '12px 8px 8px 8px',
-        marginTop: '12px',
-        borderTop: '1px solid rgba(128, 128, 128, 0.2)',
-        fontSize: '14px',
-        userSelect: 'none',
-        width: '100%',
-        boxSizing: 'border-box',
-        flexShrink: 0,
-        opacity: isSaving ? 0.6 : 1,
-        transition: 'opacity 0.2s'
-      }}
+      className={`blinko-upvote-plugin flex items-center gap-2 p-3 pt-3 pb-2 mt-3 border-t border-gray-500/20 text-sm select-none w-full box-border shrink-0 transition-opacity ${isSaving ? 'opacity-60' : 'opacity-100'}`}
       data-note-id={noteId}
     >
       {label && (
-        <div style={{
-          fontSize: '11px',
-          fontWeight: '500',
-          color: 'rgba(128, 128, 128, 0.7)',
-          marginRight: '8px'
-        }}>
+        <div className="text-[11px] font-medium text-gray-500/70 mr-2">
           {label}
         </div>
       )}
 
-      <VoteButtons currentVote={vote} onVote={handleVote} disabled={isSaving} />
-      <span
-        style={{
-          fontSize: '12px',
-          color: 'rgba(128, 128, 128, 0.8)',
-          marginLeft: '4px'
-        }}
-      >
-        {vote !== 0 ? (vote === 1 ? '+1' : '-1') : i18n.t('rating.notVoted')}
+      <VoteButtons currentVote={userRating} onVote={handleVote} disabled={isSaving} />
+      <span className="text-xs text-gray-500/80 ml-1">
+        {userRating !== 0 ? (userRating === 1 ? '+1' : '-1') : i18n.t('ratings_rating.notVoted')}
       </span>
     </div>
   );

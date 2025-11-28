@@ -6,7 +6,7 @@ export interface Note {
     tag: Tag;
   }>;
   metadata?: {
-    ratings?: Record<string, Record<string, number>>; // guid -> { userId -> rating }
+    ratingConfigs?: CardRatingMetadata;
   };
   _id: string;
   id: string;
@@ -45,4 +45,14 @@ export interface NoteRatingData {
   averageRating: number;
   voteCount: number;
   allRatings: Record<string, number>;
+}
+
+export interface CardRatingMetadata {
+  [guid: string]: {
+    enabled: boolean;
+    type: RatingDisplayType;
+    label?: string;
+    ratings: Record<string, number>;
+    createdBy?: string;
+  };
 }

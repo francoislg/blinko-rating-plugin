@@ -1,5 +1,5 @@
 {
-  "settings": {
+  "ratings_settings": {
     "pluginTitle": "Rating Plugin Settings",
     "noRatings": "No ratings configured. Click 'Add New Rating' to get started.",
     "enabled": "Enabled",
@@ -34,13 +34,21 @@
     "nameRequired": "Rating name is required",
     "ratingAdded": "Rating added successfully!",
     "saveSettings": "Save Settings",
+    "saveAndSync": "Save and Sync Notes",
+    "doNotSyncOnSave": "Do not sync on save",
     "cancel": "Cancel",
     "settingsSaved": "Settings saved!",
+    "savedAndSynced": "Settings saved and notes synced!",
     "failedToSave": "Failed to save settings",
     "failedToFetchTags": "Failed to fetch tags:",
-    "failedToParseConfig": "Failed to parse config:"
+    "failedToParseConfig": "Failed to parse config:",
+    "syncCardsButton": "Sync Cards to All Notes",
+    "syncing": "Syncing...",
+    "syncingCards": "Syncing rating configurations to all notes...",
+    "cardsSynced": "Successfully synced rating configurations to all notes!",
+    "failedToSync": "Failed to sync cards"
   },
-  "rating": {
+  "ratings_rating": {
     "ratedStars": "Rated {{count}} star!",
     "ratedStars_plural": "Rated {{count}} stars!",
     "ratingCleared": "Rating cleared",
