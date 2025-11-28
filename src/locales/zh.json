@@ -1,6 +1,5 @@
 {
   "ratings_settings": {
-    "pluginTitle": "评分插件设置",
     "noRatings": "未配置评分。点击\"添加新评分\"开始使用。",
     "enabled": "已启用",
     "disabled": "已禁用",

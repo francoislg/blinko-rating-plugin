@@ -3,7 +3,8 @@ import { useState } from 'preact/hooks';
 import type { JSXInternal } from 'preact/src/jsx';
 import { StarRating } from './StarRating';
 import { UserAvatar } from '../../components/UserAvatar';
-import { useRatingsStats } from '../../helpers/useRatingsStats';
+import { useRatingsStats } from '../../hooks/useRatingsStats';
+import { useUserData } from '../../hooks/useUserData';
 
 interface RatingComponentProps {
   noteId: string;
@@ -11,6 +12,24 @@ interface RatingComponentProps {
   currentUserId: string;
   onRatingChange: (rating: number) => Promise<void>;
   label?: string;
+}
+
+function UserRatingRow({ userId, rating }: { userId: string; rating: number }): JSXInternal.Element {
+  const userData = useUserData(userId);
+  const i18n = window.Blinko.i18n;
+
+  return (
+    <div className="flex items-center gap-2 p-1.5 bg-gray-500/5 rounded-md">
+      <UserAvatar userId={userId} size={24} isCurrentUser={false} />
+      <div className="text-[11px] text-gray-500/70 min-w-[60px]">
+        {userData.nickname || i18n.t('ratings_rating.user', { id: userId.substring(0, 6) })}
+      </div>
+      <StarRating rating={rating} isInteractive={false} />
+      <div className="text-[11px] text-gray-500/60 ml-1">
+        ({rating}/5)
+      </div>
+    </div>
+  );
 }
 
 export function StarRatingContainer({ noteId, ratings, currentUserId, onRatingChange, label }: RatingComponentProps): JSXInternal.Element {
@@ -163,19 +182,7 @@ export function StarRatingContainer({ noteId, ratings, currentUserId, onRatingCh
         </div>
         <div className="flex flex-col gap-2">
           {otherUsersVotes.map(([userId, userRating]) => (
-            <div
-              key={userId}
-              className="flex items-center gap-2 p-1.5 bg-gray-500/5 rounded-md"
-            >
-              <UserAvatar userId={userId} size={24} isCurrentUser={false} />
-              <div className="text-[11px] text-gray-500/70 min-w-[60px]">
-                {i18n.t('ratings_rating.user', { id: userId.substring(0, 6) })}
-              </div>
-              <StarRating rating={userRating} isInteractive={false} />
-              <div className="text-[11px] text-gray-500/60 ml-1">
-                ({userRating}/5)
-              </div>
-            </div>
+            <UserRatingRow key={userId} userId={userId} rating={userRating} />
           ))}
         </div>
       </div>

@@ -1,6 +1,5 @@
 {
   "ratings_settings": {
-    "pluginTitle": "Rating Plugin Settings",
     "noRatings": "No ratings configured. Click 'Add New Rating' to get started.",
     "enabled": "Enabled",
     "disabled": "Disabled",

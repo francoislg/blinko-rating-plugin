@@ -126,8 +126,6 @@ export function Setting(): JSXInternal.Element {
       className="max-w-2xl mx-auto p-4 rounded-lg"
       style={{ maxHeight: '80vh', overflowY: 'auto' }}
     >
-      <h2 className="text-xl font-bold mb-4">{i18n.t('ratings_settings.pluginTitle')}</h2>
-
       {/* List of Ratings */}
       {configs.length > 0 && (
         <div className="space-y-4 mb-6">

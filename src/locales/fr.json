@@ -1,6 +1,5 @@
 {
   "ratings_settings": {
-    "pluginTitle": "Paramètres du plugin d'évaluation",
     "noRatings": "Aucune évaluation configurée. Cliquez sur « Ajouter une nouvelle évaluation » pour commencer.",
     "enabled": "Activé",
     "disabled": "Désactivé",

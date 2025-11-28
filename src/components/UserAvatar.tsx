@@ -1,7 +1,7 @@
 /** @jsxImportSource preact */
 import { useState } from 'preact/hooks';
 import type { JSXInternal } from 'preact/src/jsx';
-import { getUserData } from '../user-helper';
+import { useUserData } from '../hooks/useUserData';
 
 interface UserAvatarProps {
   userId: string;
@@ -10,7 +10,7 @@ interface UserAvatarProps {
 }
 
 export function UserAvatar({ userId, size = 24, isCurrentUser = false }: UserAvatarProps): JSXInternal.Element {
-  const userData = getUserData(userId);
+  const userData = useUserData(userId);
   const [imageError, setImageError] = useState(false);
 
   const initials = userId.substring(0, 2).toUpperCase();

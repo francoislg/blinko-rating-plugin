@@ -2,7 +2,8 @@
 import { useState } from 'preact/hooks';
 import type { JSXInternal } from 'preact/src/jsx';
 import { UserAvatar } from '../../components/UserAvatar';
-import { useRatingsStats } from '../../helpers/useRatingsStats';
+import { useRatingsStats } from '../../hooks/useRatingsStats';
+import { useUserData } from '../../hooks/useUserData';
 
 interface UpvoteComponentProps {
   noteId: string;
@@ -10,6 +11,25 @@ interface UpvoteComponentProps {
   currentUserId: string;
   onRatingChange: (rating: number) => Promise<void>;
   label?: string;
+}
+
+function UserVoteRow({ userId, vote }: { userId: string; vote: number }): JSXInternal.Element {
+  const userData = useUserData(userId);
+  const i18n = window.Blinko.i18n;
+
+  return (
+    <div className="flex items-center gap-2 p-1.5 bg-gray-500/5 rounded-md">
+      <UserAvatar userId={userId} size={24} isCurrentUser={false} />
+      <div className="text-[11px] text-gray-500/70 min-w-[60px]">
+        {userData.nickname || i18n.t('ratings_rating.user', { id: userId.substring(0, 6) })}
+      </div>
+      <div className={`text-xs font-semibold ${
+        vote === 1 ? 'text-green-600' : 'text-red-600'
+      }`}>
+        {vote === 1 ? '+1' : '-1'}
+      </div>
+    </div>
+  );
 }
 
 export function UpvoteContainer({ noteId, ratings, currentUserId, onRatingChange, label }: UpvoteComponentProps): JSXInternal.Element {
@@ -178,20 +198,7 @@ export function UpvoteContainer({ noteId, ratings, currentUserId, onRatingChange
         </div>
         <div className="flex flex-col gap-2">
           {otherUsersVotes.map(([userId, userVote]) => (
-            <div
-              key={userId}
-              className="flex items-center gap-2 p-1.5 bg-gray-500/5 rounded-md"
-            >
-              <UserAvatar userId={userId} size={24} isCurrentUser={false} />
-              <div className="text-[11px] text-gray-500/70 min-w-[60px]">
-                {i18n.t('ratings_rating.user', { id: userId.substring(0, 6) })}
-              </div>
-              <div className={`text-xs font-semibold ${
-                userVote === 1 ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {userVote === 1 ? '+1' : '-1'}
-              </div>
-            </div>
+            <UserVoteRow key={userId} userId={userId} vote={userVote} />
           ))}
         </div>
       </div>
